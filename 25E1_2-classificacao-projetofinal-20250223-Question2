@@ -1,0 +1,37 @@
+from google.colab import drive
+import pandas as pd
+
+# Conectar ao Google Drive
+drive.mount('/content/drive')
+
+# Importar o Arquivo de Vinho
+file_path = "/content/drive/My Drive/Colab Notebooks/winequalityN.csv"
+wine_data = pd.read_csv(file_path)
+
+# Filtrar apenas vinhos brancos
+white_wine = wine_data[wine_data["type"] == "white"]
+
+# Check se o arquivo está importado ok
+print(white_wine.head())
+
+# Criar a nova variável "opinion"
+white_wine["opinion"] = (white_wine["quality"] > 5).astype(int)
+
+# Exibir as primeiras linhas para verificar as mudanças
+print(white_wine.head())
+
+# Exibir informações sobre as variáveis filtradas
+print("Informações do dataset (somente vinhos brancos):")
+print(white_wine.info())
+
+# Exibir estatísticas descritivas
+print("\nEstatísticas descritivas:")
+print(white_wine.describe())
+
+# Calcular médias e desvios padrões para vinhos brancos
+mean_values = white_wine.mean(numeric_only=True)
+std_values = white_wine.std(numeric_only=True)
+
+# Exibir resultados
+print("\nMédias das variáveis (vinhos brancos):\n", mean_values)
+print("\nDesvios padrões (vinhos brancos):\n", std_values)
