@@ -1,0 +1,66 @@
+# Importar Bibliotecas
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, make_scorer
+
+# Carregar e Preparar os Dados
+from google.colab import drive
+
+# Conectar ao Google Drive
+drive.mount('/content/drive')
+
+# Importar o Arquivo de Vinho
+file_path = "/content/drive/My Drive/Colab Notebooks/winequalityN.csv"
+wine_data = pd.read_csv(file_path)
+
+# Filtrar apenas vinhos brancos e criar cópia para evitar Warning
+white_wine = wine_data[wine_data["type"] == "white"].copy()
+
+# Criar a variável "opinion" corretamente
+white_wine.loc[:, "opinion"] = (white_wine["quality"] > 5).astype(int)
+
+# Remover colunas desnecessárias (quality e type)
+white_wine.drop(columns=["quality", "type"], inplace=True)
+
+# Tratar valores ausentes (substituir pela mediana)
+white_wine.fillna(white_wine.median(numeric_only=True), inplace=True)
+
+# Definir variáveis preditoras (X) e alvo (y)
+X = white_wine.drop(columns=["opinion"])
+y = white_wine["opinion"]
+
+# Verificar se ainda há colunas categóricas
+print("Colunas em X:", X.columns)
+print("Tipos de dados:\n", X.dtypes)
+
+# Normalizar os dados
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Criar validação cruzada estratificada com k=10
+kf = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+
+# Criar o modelo de SVM
+svm_model = SVC(kernel="linear", random_state=42)
+
+# Definir as métricas para avaliação
+scoring = {
+    "accuracy": make_scorer(accuracy_score),
+    "precision": make_scorer(precision_score),
+    "recall": make_scorer(recall_score),
+    "f1": make_scorer(f1_score),
+}
+
+# Calcular as métricas usando validação cruzada
+results = {}
+for metric, scorer in scoring.items():
+    scores = cross_val_score(svm_model, X_scaled, y, cv=kf, scoring=scorer)
+    results[metric] = {"mean": np.mean(scores), "std": np.std(scores)}
+
+# Exibir os resultados
+for metric, values in results.items():
+    print(f"{metric.capitalize()} - Média: {values['mean']:.4f}, Desvio Padrão: {values['std']:.4f}")
+
