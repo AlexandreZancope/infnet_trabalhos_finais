@@ -1,0 +1,41 @@
+# Carregar os dados originais novamente
+wine_data = pd.read_csv(file_path)
+
+# Filtrar apenas vinhos tintos
+red_wine = wine_data[wine_data["type"] == "red"].copy()
+
+# Criar a variável "opinion" para vinhos tintos (usando o mesmo critério dos vinhos brancos)
+red_wine.loc[:, "opinion"] = (red_wine["quality"] > 5).astype(int)
+
+# Remover colunas desnecessárias
+red_wine.drop(columns=["quality", "type"], inplace=True)
+
+# Tratar valores ausentes
+red_wine.fillna(red_wine.median(numeric_only=True), inplace=True)
+
+# Separar variáveis preditoras (X_red) e variável alvo (y_red)
+X_red = red_wine.drop(columns=["opinion"])
+y_red = red_wine["opinion"]
+
+# Normalizar os dados com o MESMO SCALER usado nos vinhos brancos
+X_red_scaled = scaler.transform(X_red)
+
+
+svm_model = SVC(probability=True)  # Precisamos da probabilidade para a curva ROC
+svm_model.fit(X_scaled, y)  # Treinando novamente com os vinhos brancos
+
+# Fazer predições no conjunto de vinhos tintos
+y_red_pred = svm_model.predict(X_red_scaled)
+
+# Contar quantos vinhos foram classificados como bons (1) e ruins (0)
+unique, counts = np.unique(y_red_pred, return_counts=True)
+result_dict = dict(zip(unique, counts))
+
+print("Quantidade de vinhos tintos classificados:")
+print(f"Ruins (0): {result_dict.get(0, 0)}")
+print(f"Bons (1): {result_dict.get(1, 0)}")
+
+
+# Gerar relatório de desempenho do modelo nos vinhos tintos
+report_red_wine = classification_report(y_red, y_red_pred)
+print("Desempenho do modelo nos vinhos tintos:\n", report_red_wine)
